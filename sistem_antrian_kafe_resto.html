@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aroma & Co. - Sistem Antrian Resto & Kafe</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            coffee: {
+              50: '#FDF8F5',
+              100: '#F6EAE1',
+              200: '#EBD2C1',
+              300: '#DCB599',
+              500: '#B07548',
+              600: '#8C542E',
+              700: '#693C1D',
+              800: '#4A2A14',
+              900: '#2C1809'
+            },
+            terracotta: '#D96B43',
+            crema: '#FDFBF7',
+            charcoal: '#1A1816'
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+            mono: ['"Space Mono"', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar and Print Rules */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #F6EAE1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #B07548;
+      border-radius: 9999px;
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.05); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .calling-pulse {
+      animation: pulseRing 1.8s infinite ease-in-out;
+    }
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #printableTicket, #printableTicket * {
+        visibility: visible !important;
+      }
+      #printableTicket {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-shadow: none !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-[#F8F5F0] text-charcoal font-sans min-h-screen flex flex-col selection:bg-terracotta selection:text-white">
+
+  <header class="bg-charcoal text-crema shadow-lg border-b border-coffee-800 sticky top-0 z-40 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        <!-- Brand Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="w-11 h-11 rounded-2xl bg-terracotta flex items-center justify-center shadow-md shadow-terracotta/30 text-white font-serif font-bold text-2xl">
+            ☕
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-serif text-2xl font-bold tracking-tight text-coffee-100">Aroma & Co.</span>
+              <span class="bg-coffee-700/60 text-coffee-200 text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider">Resto & Brew</span>
+            </div>
+            <p class="text-xs text-coffee-300">Live Hospitality Queue Management System</p>
+          </div>
+        </div>
+
+        <!-- Navigation Views -->
+        <nav class="hidden md:flex items-center space-x-1 bg-black/40 p-1.5 rounded-2xl border border-white/10">
+          <button onclick="switchTab('display')" id="tab-btn-display" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 text-white bg-terracotta shadow">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Layar Monitor
+          </button>
+          <button onclick="switchTab('kiosk')" id="tab-btn-kiosk" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 text-coffee-300 hover:text-white hover:bg-white/5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/></svg>
+            Ambil Tiket
+          </button>
+          <button onclick="switchTab('staff')" id="tab-btn-staff" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 text-coffee-300 hover:text-white hover:bg-white/5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+            Panel Staf
+          </button>
+        </nav>
+
+        <!-- Right Toolbelt -->
+        <div class="flex items-center space-x-3">
+          <!-- Audio Toggle -->
+          <button onclick="toggleSound()" id="soundToggleBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-medium text-coffee-200 transition">
+            <span id="soundIcon">🔊</span>
+            <span id="soundText" class="hidden sm:inline">Suara: ON</span>
+          </button>
+          <!-- Current Clock -->
+          <div class="text-right hidden sm:block bg-black/30 px-3 py-1.5 rounded-xl border border-white/5 font-mono text-xs">
+            <div id="clockDisplay" class="font-bold text-coffee-100">11:57:00 WIB</div>
+            <div id="dateDisplay" class="text-[10px] text-coffee-300">Kamis, 1 Okt 2026</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile Tab Bar -->
+      <div class="flex md:hidden border-t border-white/10 py-2 gap-2 overflow-x-auto">
+        <button onclick="switchTab('display')" id="tab-btn-display-m" class="tab-btn-m flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center bg-terracotta text-white whitespace-nowrap">Layar TV</button>
+        <button onclick="switchTab('kiosk')" id="tab-btn-kiosk-m" class="tab-btn-m flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center text-coffee-300 bg-white/5 whitespace-nowrap">Ambil Antrian</button>
+        <button onclick="switchTab('staff')" id="tab-btn-staff-m" class="tab-btn-m flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center text-coffee-300 bg-white/5 whitespace-nowrap">Panel Staf</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col">
+    <!-- Announcement Bar -->
+    <div class="mb-6 rounded-2xl bg-coffee-100 border border-coffee-200/80 p-3 flex items-center shadow-sm no-print">
+      <div class="flex items-center gap-2 bg-coffee-700 text-white text-xs font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider flex-shrink-0">
+        <span class="animate-pulse">●</span> Warta Kafe
+      </div>
+      <div class="overflow-hidden relative w-full ml-3 text-xs sm:text-sm font-medium text-coffee-800">
+        <div class="inline-block whitespace-nowrap animate-marquee">
+          Selamat datang di Aroma & Co. Resto & Coffee! Mohon perhatikan nomor antrian pada layar. Pastikan seluruh anggota rombongan berkumpul saat nomor Anda dipanggil. Nikmati free infused water di hospitality counter.
+        </div>
+      </div>
+    </div>
+
+    <section id="view-display" class="tab-view block space-y-6">
+      <!-- Main Callout Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- Big Active Serving Card (Left 8 Cols) -->
+        <div class="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-10 border border-coffee-200 shadow-xl relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-coffee-50 opacity-70 pointer-events-none"></div>
+
+          <div>
+            <div class="flex items-center justify-between border-b border-coffee-100 pb-4 mb-6">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-3 h-3 rounded-full bg-emerald-500 animate-ping"></span>
+                <h2 class="text-sm sm:text-base font-bold uppercase tracking-widest text-terracotta">Sedang Dipanggil / Now Calling</h2>
+              </div>
+              <span id="currentStatusBadge" class="bg-amber-100 text-amber-800 border border-amber-300 text-xs px-3 py-1 rounded-full font-semibold">
+                Menunggu Panggilan
+              </span>
+            </div>
+
+            <!-- Number Display -->
+            <div class="text-center py-6 sm:py-10">
+              <div id="nowServingNumber" class="font-mono text-7xl sm:text-9xl font-black text-charcoal tracking-tight drop-shadow-sm transition-all duration-300">
+                ---
+              </div>
+              <div id="nowServingName" class="font-serif text-2xl sm:text-3xl text-coffee-700 mt-2 font-semibold">
+                Belum ada antrian aktif
+              </div>
+              <div id="nowServingDetails" class="inline-flex items-center gap-3 mt-4 text-xs sm:text-sm text-coffee-600 bg-coffee-50 px-4 py-1.5 rounded-full border border-coffee-200">
+                <span>Rombongan: - Pax</span>
+                <span>•</span>
+                <span>Area: -</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Counter Target Box -->
+          <div class="mt-6 bg-gradient-to-r from-coffee-800 to-charcoal rounded-2xl p-6 text-crema flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg">
+            <div class="text-center sm:text-left">
+              <span class="text-xs uppercase tracking-wider text-coffee-300 block font-semibold">Silakan Menuju ke</span>
+              <span id="nowServingDestination" class="text-xl sm:text-2xl font-bold text-white tracking-wide">Meja Belum Ditentukan</span>
+            </div>
+            <button onclick="repeatCurrentCall()" class="px-5 py-2.5 bg-terracotta hover:bg-terracotta/90 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+              Panggil Ulang (Bell & Suara)
+            </button>
+          </div>
+        </div>
+
+        <!-- Next in Line & Summary (Right 4 Cols) -->
+        <div class="lg:col-span-4 flex flex-col gap-6">
+          <!-- Next Up -->
+          <div class="bg-crema rounded-3xl p-6 border border-coffee-200 shadow-md">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-coffee-600 mb-4 flex items-center justify-between">
+              <span>Nomor Berikutnya</span>
+              <span class="text-[11px] bg-coffee-200 text-coffee-800 px-2 py-0.5 rounded-full font-bold" id="nextQueueBadge">Siap-siap</span>
+            </h3>
+            <div class="text-center py-4 border-b border-coffee-200/60">
+              <div id="nextQueueNumber" class="font-mono text-5xl font-black text-coffee-800">
+                ---
+              </div>
+              <div id="nextQueueName" class="text-sm font-semibold text-coffee-600 mt-1">
+                Tidak ada antrian lagi
+              </div>
+              <div id="nextQueueArea" class="text-xs text-coffee-400 mt-0.5">
+                Area: -
+              </div>
+            </div>
+            <div class="mt-4 flex justify-between items-center text-xs text-coffee-600">
+              <span>Sisa antrian menunggu:</span>
+              <span id="waitingCountDisplay" class="font-bold text-terracotta text-base">0 Orang</span>
+            </div>
+          </div>
+
+          <!-- Quick Metrics -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-white p-4 rounded-2xl border border-coffee-200 shadow-sm text-center">
+              <span class="text-[11px] text-coffee-500 font-semibold block uppercase">Selesai Hari Ini</span>
+              <span id="completedCountDisplay" class="text-2xl font-black text-emerald-600 font-mono">0</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-coffee-200 shadow-sm text-center">
+              <span class="text-[11px] text-coffee-500 font-semibold block uppercase">Rata-rata Tunggu</span>
+              <span id="avgWaitTimeDisplay" class="text-2xl font-black text-coffee-700 font-mono">~10m</span>
+            </div>
+          </div>
+
+          <!-- Area Waiting breakdown -->
+          <div class="bg-white p-5 rounded-2xl border border-coffee-200 shadow-sm flex-1">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-coffee-600 mb-3">Antrian per Area</h4>
+            <div class="space-y-2 text-xs" id="areaBreakdownList">
+              <div class="flex justify-between items-center text-coffee-700 py-1 border-b border-coffee-50">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Indoor AC (Dining)</span>
+                <span class="font-bold font-mono" id="count-indoor">0</span>
+              </div>
+              <div class="flex justify-between items-center text-coffee-700 py-1 border-b border-coffee-50">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Outdoor / Smoking</span>
+                <span class="font-bold font-mono" id="count-outdoor">0</span>
+              </div>
+              <div class="flex justify-between items-center text-coffee-700 py-1 border-b border-coffee-50">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-purple-500"></span> VIP Lounge</span>
+                <span class="font-bold font-mono" id="count-vip">0</span>
+              </div>
+              <div class="flex justify-between items-center text-coffee-700 py-1">
+                <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Takeaway / Express</span>
+                <span class="font-bold font-mono" id="count-takeaway">0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 border border-coffee-200 shadow-md">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-coffee-700 mb-4 flex items-center gap-2">
+          <span>🕒 Riwayat Panggilan Terakhir</span>
+          <span class="text-xs font-normal text-coffee-400">(Telah masuk ke meja/kasir)</span>
+        </h3>
+        <div id="recentCallsContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+          <div class="text-center py-4 bg-coffee-50 rounded-xl text-coffee-400 text-xs col-span-full">Belum ada riwayat panggilan</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-kiosk" class="tab-view hidden max-w-4xl mx-auto w-full space-y-8">
+      <div class="text-center max-w-xl mx-auto">
+        <h2 class="font-serif text-3xl sm:text-4xl font-bold text-coffee-900">Ambil Nomor Antrian</h2>
+        <p class="text-sm sm:text-base text-coffee-600 mt-2">Silakan isi data rombongan Anda untuk mendapatkan tiket antrian meja atau pesanan takeaway.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+        <!-- Form Kiosk -->
+        <div class="md:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-coffee-200 shadow-xl">
+          <form id="kioskForm" onsubmit="handleTakeTicket(event)" class="space-y-5">
+            <!-- Customer Name -->
+            <div>
+              <label for="custName" class="block text-xs font-bold uppercase tracking-wider text-coffee-700 mb-1.5">Nama Pemesan / Rombongan *</label>
+              <input type="text" id="custName" required placeholder="Contoh: Bpk. Dimas / Nadia" class="w-full px-4 py-3 rounded-2xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-terracotta focus:border-transparent text-sm bg-crema/40">
+            </div>
+
+            <!-- Pax Selection -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-coffee-700 mb-1.5">Jumlah Tamu (Pax)</label>
+              <div class="grid grid-cols-4 gap-2">
+                <button type="button" onclick="selectPax(1)" class="pax-btn py-2.5 rounded-xl border border-coffee-200 text-sm font-bold text-coffee-800 hover:border-terracotta transition bg-crema">1 Pax</button>
+                <button type="button" onclick="selectPax(2)" class="pax-btn py-2.5 rounded-xl border border-terracotta bg-terracotta text-white text-sm font-bold transition shadow-sm">2 Pax</button>
+                <button type="button" onclick="selectPax(4)" class="pax-btn py-2.5 rounded-xl border border-coffee-200 text-sm font-bold text-coffee-800 hover:border-terracotta transition bg-crema">3-4 Pax</button>
+                <button type="button" onclick="selectPax(6)" class="pax-btn py-2.5 rounded-xl border border-coffee-200 text-sm font-bold text-coffee-800 hover:border-terracotta transition bg-crema">5+ Pax</button>
+              </div>
+              <input type="hidden" id="custPax" value="2">
+            </div>
+
+            <!-- Seating Preference -->
+            <div>
+              <label class="block text-xs font-bold uppercase tracking-wider text-coffee-700 mb-1.5">Pilihan Area Meja</label>
+              <div class="grid grid-cols-2 gap-3">
+                <label class="area-radio flex items-center p-3.5 border-2 border-terracotta bg-coffee-50/60 rounded-2xl cursor-pointer transition">
+                  <input type="radio" name="areaOption" value="Indoor AC" checked class="text-terracotta focus:ring-terracotta">
+                  <div class="ml-3">
+                    <span class="block text-xs font-bold text-coffee-900">Indoor AC</span>
+                    <span class="block text-[11px] text-coffee-500">Non-smoking, dingin</span>
+                  </div>
+                </label>
+                <label class="area-radio flex items-center p-3.5 border border-coffee-200 hover:border-coffee-400 bg-white rounded-2xl cursor-pointer transition">
+                  <input type="radio" name="areaOption" value="Outdoor" class="text-terracotta focus:ring-terracotta">
+                  <div class="ml-3">
+                    <span class="block text-xs font-bold text-coffee-900">Outdoor Garden</span>
+                    <span class="block text-[11px] text-coffee-500">Smoking allowed, breezy</span>
+                  </div>
+                </label>
+                <label class="area-radio flex items-center p-3.5 border border-coffee-200 hover:border-coffee-400 bg-white rounded-2xl cursor-pointer transition">
+                  <input type="radio" name="areaOption" value="VIP Lounge" class="text-terracotta focus:ring-terracotta">
+                  <div class="ml-3">
+                    <span class="block text-xs font-bold text-coffee-900">VIP Meeting Room</span>
+                    <span class="block text-[11px] text-coffee-500">Private, sofa nyaman</span>
+                  </div>
+                </label>
+                <label class="area-radio flex items-center p-3.5 border border-coffee-200 hover:border-coffee-400 bg-white rounded-2xl cursor-pointer transition">
+                  <input type="radio" name="areaOption" value="Takeaway" class="text-terracotta focus:ring-terracotta">
+                  <div class="ml-3">
+                    <span class="block text-xs font-bold text-coffee-900">Bungkus / Takeaway</span>
+                    <span class="block text-[11px] text-coffee-500">Express pickup</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label for="custNotes" class="block text-xs font-bold uppercase tracking-wider text-coffee-700 mb-1.5">Catatan Khusus (Opsional)</label>
+              <input type="text" id="custNotes" placeholder="Misal: Butuh baby chair, stopkontak laptop" class="w-full px-4 py-2.5 rounded-2xl border border-coffee-200 focus:outline-none focus:ring-2 focus:ring-terracotta text-xs bg-crema/40">
+            </div>
+
+            <button type="submit" class="w-full py-4 bg-terracotta hover:bg-[#c45a33] text-white font-bold rounded-2xl shadow-lg shadow-terracotta/25 transition duration-200 flex items-center justify-center gap-2 text-base">
+              <span>🖨️ Cetak & Ambil Tiket Antrian</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- Ticket Preview (Receipt Aesthetic) -->
+        <div class="md:col-span-5 flex flex-col items-center">
+          <div class="text-xs font-bold text-coffee-600 mb-2 uppercase tracking-wider">Preview Tiket Pelanggan</div>
+          
+          <!-- Aesthetic Receipt Card -->
+          <div id="printableTicket" class="w-full max-w-xs bg-white border border-coffee-200 rounded-3xl p-6 shadow-2xl relative text-charcoal font-sans">
+            <!-- Jagged Top Deco -->
+            <div class="text-center border-b-2 border-dashed border-coffee-200 pb-4">
+              <span class="text-2xl">☕</span>
+              <h4 class="font-serif font-bold text-xl text-coffee-900 tracking-tight">AROMA & CO.</h4>
+              <p class="text-[10px] text-coffee-500 uppercase tracking-widest">Kopi & Santapan Santai</p>
+              <p class="text-[10px] text-coffee-400 mt-1">Jl. Senopati No. 88, Jakarta Selatan</p>
+            </div>
+
+            <div class="text-center py-6">
+              <span class="text-xs uppercase font-bold text-coffee-400 tracking-wider">Nomor Antrian Anda</span>
+              <div id="ticketPreviewNum" class="font-mono text-6xl font-black text-coffee-900 tracking-tight my-2">A-00</div>
+              <div id="ticketPreviewName" class="font-semibold text-coffee-800 text-sm">Tamu Resto</div>
+              <div id="ticketPreviewArea" class="text-xs text-terracotta font-bold mt-1">Area: Indoor AC (2 Pax)</div>
+            </div>
+
+            <div class="border-t-2 border-dashed border-coffee-200 py-3 text-xs space-y-1.5 text-coffee-600">
+              <div class="flex justify-between">
+                <span>Waktu Ambil:</span>
+                <span id="ticketPreviewTime" class="font-mono font-medium">--:-- WIB</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Antrian di depan:</span>
+                <span id="ticketPreviewAhead" class="font-bold text-coffee-800 font-mono">0 rombongan</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Estimasi Tunggu:</span>
+                <span id="ticketPreviewWait" class="font-bold text-emerald-700 font-mono">~5 - 10 Menit</span>
+              </div>
+            </div>
+
+            <!-- Fake Aesthetic QR Code -->
+            <div class="border-t-2 border-dashed border-coffee-200 pt-4 flex flex-col items-center">
+              <div class="w-24 h-24 bg-coffee-50 border border-coffee-200 p-2 rounded-xl flex items-center justify-center">
+                <svg class="w-20 h-20 text-coffee-800" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm14 2h2v4h-2v-4zm-4-4h4v2h-4v-2zm2 6h4v2h-4v-2zm2-4h2v2h-2v-2zm-6 2h2v4h-2v-4zm0-6h2v2h-2v-2z"/>
+                </svg>
+              </div>
+              <span class="text-[9px] text-coffee-400 mt-2 text-center uppercase tracking-wider">Scan untuk pantau antrian di HP</span>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-coffee-100 text-center">
+              <p class="text-[10px] text-coffee-400 italic">Terima kasih telah sabar menunggu.<br>Kami siapkan hidangan terbaik untuk Anda.</p>
+            </div>
+          </div>
+
+          <button onclick="window.print()" class="mt-4 px-6 py-2 bg-coffee-800 hover:bg-coffee-900 text-crema text-xs font-semibold rounded-xl shadow transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Cetak Struk Ini
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-staff" class="tab-view hidden space-y-6">
+      
+      <!-- Top Staff Control Bar -->
+      <div class="bg-white rounded-3xl p-6 border border-coffee-200 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="font-serif text-2xl font-bold text-coffee-900">Panel Kendali Antrian Staf</h2>
+          <p class="text-xs sm:text-sm text-coffee-600">Panggil pengunjung berikutnya, atur alokasi meja, atau batalkan antrian.</p>
+        </div>
+
+        <!-- Action Quick Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Destination Table Selector -->
+          <div class="flex items-center gap-2 bg-coffee-50 border border-coffee-200 px-3 py-1.5 rounded-xl">
+            <label for="tableAssignment" class="text-xs font-bold text-coffee-700 whitespace-nowrap">Meja / Lokasi:</label>
+            <select id="tableAssignment" class="bg-white border border-coffee-300 text-xs font-bold text-coffee-800 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-terracotta">
+              <option value="Meja 1 (Indoor)">Meja 1 (Indoor)</option>
+              <option value="Meja 2 (Indoor)">Meja 2 (Indoor)</option>
+              <option value="Meja 3 (Indoor)">Meja 3 (Indoor)</option>
+              <option value="Meja 4 (Outdoor)">Meja 4 (Outdoor)</option>
+              <option value="Meja 5 (Outdoor)">Meja 5 (Outdoor)</option>
+              <option value="VIP Room 1">VIP Room 1</option>
+              <option value="VIP Room 2">VIP Room 2</option>
+              <option value="Kasir / Pickup Takeaway">Kasir Pickup Takeaway</option>
+            </select>
+          </div>
+
+          <button onclick="callNextQueue()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md transition flex items-center gap-2 text-xs sm:text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
+            Panggil Berikutnya
+          </button>
+
+          <button onclick="markCurrentCompleted()" class="px-4 py-2.5 bg-coffee-700 hover:bg-coffee-800 text-white font-bold rounded-xl shadow-sm transition text-xs">
+            ✓ Tandai Selesai
+          </button>
+
+          <button onclick="resetDayDataPrompt()" class="px-3 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-semibold rounded-xl transition text-xs" title="Reset Antrian Hari Ini">
+            Reset Data
+          </button>
+        </div>
+      </div>
+
+      <!-- Queue Table Management -->
+      <div class="bg-white rounded-3xl p-6 border border-coffee-200 shadow-md">
+        <!-- Filter Tabs -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-coffee-100 gap-3">
+          <div class="flex items-center gap-2 overflow-x-auto">
+            <button onclick="filterStaffTable('all')" id="filter-all" class="staff-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-coffee-800 text-white">Semua (<span id="count-filter-all">0</span>)</button>
+            <button onclick="filterStaffTable('waiting')" id="filter-waiting" class="staff-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-coffee-50 text-coffee-700 hover:bg-coffee-100">Menunggu (<span id="count-filter-waiting">0</span>)</button>
+            <button onclick="filterStaffTable('calling')" id="filter-calling" class="staff-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-coffee-50 text-coffee-700 hover:bg-coffee-100">Dipanggil (<span id="count-filter-calling">0</span>)</button>
+            <button onclick="filterStaffTable('completed')" id="filter-completed" class="staff-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-coffee-50 text-coffee-700 hover:bg-coffee-100">Selesai (<span id="count-filter-completed">0</span>)</button>
+          </div>
+
+          <!-- Quick Search -->
+          <div class="relative">
+            <input type="text" id="staffSearchInput" oninput="renderStaffTable()" placeholder="Cari nama atau nomor..." class="px-3 py-1.5 pl-8 rounded-xl border border-coffee-200 text-xs w-full sm:w-60 focus:outline-none focus:ring-1 focus:ring-terracotta">
+            <svg class="w-4 h-4 text-coffee-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+        </div>
+
+        <!-- Table View -->
+        <div class="overflow-x-auto mt-4">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-coffee-50 text-coffee-600 uppercase font-semibold">
+              <tr>
+                <th class="p-3 rounded-l-xl">No. Tiket</th>
+                <th class="p-3">Nama Tamu</th>
+                <th class="p-3">Pax</th>
+                <th class="p-3">Area & Catatan</th>
+                <th class="p-3">Waktu Ambil</th>
+                <th class="p-3">Status / Meja</th>
+                <th class="p-3 text-right rounded-r-xl">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="staffTableBody" class="divide-y divide-coffee-100 font-medium">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+          <div id="staffTableEmpty" class="text-center py-10 text-coffee-400 text-xs hidden">
+            Tidak ada antrian yang cocok dengan filter.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div id="toastMessage" class="fixed bottom-6 right-6 max-w-sm bg-charcoal text-white px-5 py-3 rounded-2xl shadow-2xl border border-white/20 transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none z-50 flex items-center gap-3">
+      <span id="toastIcon" class="text-xl">🔔</span>
+      <div>
+        <h5 id="toastTitle" class="text-xs font-bold uppercase tracking-wider text-coffee-200">Notifikasi</h5>
+        <p id="toastBody" class="text-xs text-white/90">Pesan antrian.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-crema border-t border-coffee-200 py-4 text-center text-xs text-coffee-600 no-print mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        <span>Aroma & Co. Queue Station • Sinkronisasi Otomatis</span>
+      </div>
+      <div>
+        Tekan tombol <kbd class="px-1.5 py-0.5 bg-coffee-200 rounded text-[10px] font-mono">F11</kbd> pada monitor untuk Layar Penuh (Fullscreen TV)
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /* =========================================================================
+       1. STATE MANAGEMENT & LOCAL STORAGE
+       ========================================================================= */
+    const STORAGE_KEY = 'aroma_resto_queues_v1';
+    let soundEnabled = true;
+    let currentFilter = 'all';
+
+    // Mock initial state if none exists
+    const initialQueues = [
+      {
+        id: 'A-01',
+        name: 'Siti Rahma',
+        pax: 2,
+        area: 'Indoor AC',
+        notes: 'Dekat jendela jika ada',
+        time: '11:35',
+        status: 'completed', // 'waiting', 'calling', 'completed', 'cancelled'
+        destination: 'Meja 2 (Indoor)',
+        calledAt: '11:42'
+      },
+      {
+        id: 'A-02',
+        name: 'Reza Pratama',
+        pax: 4,
+        area: 'Outdoor',
+        notes: '',
+        time: '11:45',
+        status: 'calling',
+        destination: 'Meja 5 (Outdoor)',
+        calledAt: '11:55'
+      },
+      {
+        id: 'A-03',
+        name: 'Budi Santoso',
+        pax: 3,
+        area: 'Indoor AC',
+        notes: 'Bawa balita',
+        time: '11:50',
+        status: 'waiting',
+        destination: '',
+        calledAt: ''
+      },
+      {
+        id: 'A-04',
+        name: 'Clarissa',
+        pax: 1,
+        area: 'Takeaway',
+        notes: 'Oat milk latte x2',
+        time: '11:54',
+        status: 'waiting',
+        destination: '',
+        calledAt: ''
+      }
+    ];
+
+    function loadQueues() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      if (!data) {
+        saveQueues(initialQueues);
+        return initialQueues;
+      }
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        return initialQueues;
+      }
+    }
+
+    function saveQueues(queues) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(queues));
+    }
+
+    /* =========================================================================
+       2. WEB AUDIO API CHIME & TEXT-TO-SPEECH
+       ========================================================================= */
+    let audioCtx = null;
+
+    function playDingDongChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        if (!audioCtx) audioCtx = new AudioContext();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const now = audioCtx.currentTime;
+
+        // 1st Tone (Ding - High pitch 587.33 Hz / D5)
+        const osc1 = audioCtx.createOscillator();
+        const gain1 = audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0, now);
+        gain1.gain.linearRampToValueAtTime(0.4, now + 0.05);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.75);
+
+        // 2nd Tone (Dong - Warm lower pitch 440 Hz / A4)
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(440, now + 0.35);
+        gain2.gain.setValueAtTime(0, now + 0.35);
+        gain2.gain.linearRampToValueAtTime(0.35, now + 0.4);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now + 0.35);
+        osc2.stop(now + 1.3);
+      } catch (err) {
+        console.error('Audio synthesizer error:', err);
+      }
+    }
+
+    function speakAnnouncement(ticketNumber, customerName, destination) {
+      if (!soundEnabled) return;
+      if (!('speechSynthesis' in window)) return;
+
+      // Play bell chime first, then trigger spoken voice
+      playDingDongChime();
+
+      setTimeout(() => {
+        window.speechSynthesis.cancel(); // Clear any queued speech
+
+        // Split code like "A-05" into "A kosong lima" for clearer pronunciation
+        let spokenCode = ticketNumber;
+        if (ticketNumber.includes('-')) {
+          const parts = ticketNumber.split('-');
+          spokenCode = `${parts[0]} ${parts[1]}`;
+        }
+
+        const text = `Nomor antrian, ${spokenCode}. Atas nama ${customerName}. Silakan menuju ${destination}.`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'id-ID';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+
+        // Try selecting an Indonesian voice if available in browser
+        const voices = window.speechSynthesis.getVoices();
+        const idVoice = voices.find(v => v.lang.includes('id') || v.lang.includes('ID'));
+        if (idVoice) utterance.voice = idVoice;
+
+        window.speechSynthesis.speak(utterance);
+      }, 750);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('soundIcon');
+      const text = document.getElementById('soundText');
+      if (soundEnabled) {
+        icon.textContent = '🔊';
+        text.textContent = 'Suara: ON';
+        showToast('Audio Aktif', 'Notifikasi lonceng & suara pembaca siap digunakan.');
+        playDingDongChime();
+      } else {
+        icon.textContent = '🔇';
+        text.textContent = 'Suara: OFF';
+        showToast('Audio Senyap', 'Panggilan suara dinonaktifkan.');
+      }
+    }
+
+    /* =========================================================================
+       3. NAVIGATION & TAB SWITCHING
+       ========================================================================= */
+    function switchTab(viewId) {
+      // Hide all views
+      document.querySelectorAll('.tab-view').forEach(view => {
+        view.classList.add('hidden');
+      });
+      // Show selected
+      const target = document.getElementById(`view-${viewId}`);
+      if (target) target.classList.remove('hidden');
+
+      // Update Desktop Buttons
+      const tabs = ['display', 'kiosk', 'staff'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const btnM = document.getElementById(`tab-btn-${t}-m`);
+        if (t === viewId) {
+          if (btn) {
+            btn.className = 'tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 text-white bg-terracotta shadow';
+          }
+          if (btnM) {
+            btnM.className = 'tab-btn-m flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center bg-terracotta text-white whitespace-nowrap';
+          }
+        } else {
+          if (btn) {
+            btn.className = 'tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-2 text-coffee-300 hover:text-white hover:bg-white/5';
+          }
+          if (btnM) {
+            btnM.className = 'tab-btn-m flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold text-center text-coffee-300 bg-white/5 whitespace-nowrap';
+          }
+        }
+      });
+
+      renderAll();
+    }
+
+    /* =========================================================================
+       4. DISPLAY RENDERING & STATS
+       ========================================================================= */
+    function renderAll() {
+      const queues = loadQueues();
+      renderDisplayMonitor(queues);
+      renderStaffTable(queues);
+      updateSummaryCounts(queues);
+    }
+
+    function renderDisplayMonitor(queues) {
+      const callingItem = queues.find(q => q.status === 'calling');
+      const waitingList = queues.filter(q => q.status === 'waiting');
+      const nextItem = waitingList[0];
+
+      // Update Now Serving
+      const numEl = document.getElementById('nowServingNumber');
+      const nameEl = document.getElementById('nowServingName');
+      const detailEl = document.getElementById('nowServingDetails');
+      const destEl = document.getElementById('nowServingDestination');
+      const badgeEl = document.getElementById('currentStatusBadge');
+
+      if (callingItem) {
+        numEl.textContent = callingItem.id;
+        nameEl.textContent = callingItem.name;
+        detailEl.innerHTML = `<span>Rombongan: ${callingItem.pax} Pax</span> <span>•</span> <span>Area: ${callingItem.area}</span>`;
+        destEl.textContent = callingItem.destination || 'Meja Dipersiapkan';
+        badgeEl.textContent = 'SEDANG DIPANGGIL';
+        badgeEl.className = 'bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider animate-pulse';
+        numEl.classList.add('text-terracotta', 'calling-pulse');
+        numEl.classList.remove('text-charcoal');
+      } else {
+        numEl.textContent = '---';
+        nameEl.textContent = 'Menunggu Panggilan Berikutnya';
+        detailEl.innerHTML = `<span>Rombongan: - Pax</span> <span>•</span> <span>Area: -</span>`;
+        destEl.textContent = 'Menunggu Alokasi Staf';
+        badgeEl.textContent = 'Standby';
+        badgeEl.className = 'bg-coffee-100 text-coffee-700 border border-coffee-300 text-xs px-3 py-1 rounded-full font-semibold';
+        numEl.classList.remove('text-terracotta', 'calling-pulse');
+        numEl.classList.add('text-charcoal');
+      }
+
+      // Next in Line
+      const nextNumEl = document.getElementById('nextQueueNumber');
+      const nextNameEl = document.getElementById('nextQueueName');
+      const nextAreaEl = document.getElementById('nextQueueArea');
+      const waitCountEl = document.getElementById('waitingCountDisplay');
+
+      if (nextItem) {
+        nextNumEl.textContent = nextItem.id;
+        nextNameEl.textContent = `${nextItem.name} (${nextItem.pax} Pax)`;
+        nextAreaEl.textContent = `Area: ${nextItem.area}`;
+      } else {
+        nextNumEl.textContent = '---';
+        nextNameEl.textContent = 'Tidak ada antrian lagi';
+        nextAreaEl.textContent = 'Area: -';
+      }
+      waitCountEl.textContent = `${waitingList.length} Rombongan`;
+
+      // Area Breakdown
+      document.getElementById('count-indoor').textContent = queues.filter(q => q.status === 'waiting' && q.area === 'Indoor AC').length;
+      document.getElementById('count-outdoor').textContent = queues.filter(q => q.status === 'waiting' && q.area === 'Outdoor').length;
+      document.getElementById('count-vip').textContent = queues.filter(q => q.status === 'waiting' && q.area === 'VIP Lounge').length;
+      document.getElementById('count-takeaway').textContent = queues.filter(q => q.status === 'waiting' && q.area === 'Takeaway').length;
+
+      // Recent Calls
+      const recentCalls = queues.filter(q => q.status === 'completed' || q.status === 'calling').slice(-6).reverse();
+      const recentContainer = document.getElementById('recentCallsContainer');
+      if (recentCalls.length === 0) {
+        recentContainer.innerHTML = `<div class="text-center py-4 bg-coffee-50 rounded-xl text-coffee-400 text-xs col-span-full">Belum ada riwayat panggilan</div>`;
+      } else {
+        recentContainer.innerHTML = recentCalls.map(item => `
+          <div class="bg-crema border border-coffee-200 rounded-2xl p-3 text-center transition hover:border-terracotta">
+            <span class="font-mono font-black text-lg ${item.status === 'calling' ? 'text-terracotta' : 'text-coffee-800'}">${item.id}</span>
+            <div class="text-[11px] font-semibold text-coffee-900 truncate mt-0.5">${item.name}</div>
+            <div class="text-[10px] text-coffee-500">${item.destination || item.area}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    function updateSummaryCounts(queues) {
+      const completed = queues.filter(q => q.status === 'completed').length;
+      const waiting = queues.filter(q => q.status === 'waiting').length;
+      const calling = queues.filter(q => q.status === 'calling').length;
+
+      document.getElementById('completedCountDisplay').textContent = completed;
+      document.getElementById('count-filter-all').textContent = queues.length;
+      document.getElementById('count-filter-waiting').textContent = waiting;
+      document.getElementById('count-filter-calling').textContent = calling;
+      document.getElementById('count-filter-completed').textContent = completed;
+
+      // Estimate average wait time (rough 4 min per waiting customer)
+      const avgMinutes = Math.max(5, waiting * 4);
+      document.getElementById('avgWaitTimeDisplay').textContent = `~${avgMinutes}m`;
+    }
+
+    /* =========================================================================
+       5. STAFF CONSOLE TABLE & ACTIONS
+       ========================================================================= */
+    function filterStaffTable(status) {
+      currentFilter = status;
+      document.querySelectorAll('.staff-filter-btn').forEach(b => {
+        b.className = 'staff-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-coffee-50 text-coffee-700 hover:bg-coffee-100';
+      });
+      const activeBtn = document.getElementById(`filter-${status}`);
+      if (activeBtn) {
+        activeBtn.className = 'staff-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-coffee-800 text-white';
+      }
+      renderStaffTable();
+    }
+
+    function renderStaffTable(queues = null) {
+      if (!queues) queues = loadQueues();
+      const searchQuery = (document.getElementById('staffSearchInput')?.value || '').toLowerCase();
+      
+      let filtered = queues.filter(q => {
+        if (currentFilter !== 'all' && q.status !== currentFilter) return false;
+        if (searchQuery && !q.name.toLowerCase().includes(searchQuery) && !q.id.toLowerCase().includes(searchQuery)) {
+          return false;
+        }
+        return true;
+      });
+
+      const tbody = document.getElementById('staffTableBody');
+      const emptyNotice = document.getElementById('staffTableEmpty');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyNotice.classList.remove('hidden');
+        return;
+      }
+
+      emptyNotice.classList.add('hidden');
+      tbody.innerHTML = filtered.map(item => {
+        let badgeColor = 'bg-amber-100 text-amber-800';
+        let labelStatus = 'Menunggu';
+
+        if (item.status === 'calling') {
+          badgeColor = 'bg-emerald-100 text-emerald-800 animate-pulse';
+          labelStatus = 'Sedang Dipanggil';
+        } else if (item.status === 'completed') {
+          badgeColor = 'bg-coffee-100 text-coffee-700';
+          labelStatus = 'Selesai';
+        } else if (item.status === 'cancelled') {
+          badgeColor = 'bg-rose-100 text-rose-700';
+          labelStatus = 'Dibatalkan';
+        }
+
+        return `
+          <tr class="hover:bg-coffee-50/50 transition">
+            <td class="p-3 font-mono font-bold text-coffee-900">${item.id}</td>
+            <td class="p-3 font-semibold text-charcoal">${item.name}</td>
+            <td class="p-3 text-coffee-600">${item.pax} Orang</td>
+            <td class="p-3">
+              <span class="inline-block px-2 py-0.5 rounded bg-coffee-100 text-coffee-800 text-[10px] font-semibold">${item.area}</span>
+              ${item.notes ? `<p class="text-[10px] text-coffee-500 italic mt-0.5">${item.notes}</p>` : ''}
+            </td>
+            <td class="p-3 font-mono text-coffee-500">${item.time}</td>
+            <td class="p-3">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeColor}">
+                ${labelStatus}
+              </span>
+              ${item.destination ? `<div class="text-[10px] text-coffee-600 font-semibold mt-0.5">📌 ${item.destination}</div>` : ''}
+            </td>
+            <td class="p-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <button onclick="callSpecificTicket('${item.id}')" title="Panggil Antrian Ini" class="px-2.5 py-1 rounded-lg bg-coffee-800 hover:bg-terracotta text-white font-medium text-[11px] transition">
+                  📢 Panggil
+                </button>
+                <button onclick="setQueueStatus('${item.id}', 'completed')" title="Selesai" class="p-1 rounded-lg hover:bg-emerald-100 text-emerald-700 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </button>
+                <button onclick="setQueueStatus('${item.id}', 'cancelled')" title="Batalkan/Lewati" class="p-1 rounded-lg hover:bg-rose-100 text-rose-700 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /* =========================================================================
+       6. QUEUE LIFECYCLE CONTROLS
+       ========================================================================= */
+    function callNextQueue() {
+      const queues = loadQueues();
+      const selectedTable = document.getElementById('tableAssignment').value;
+      const nextItem = queues.find(q => q.status === 'waiting');
+
+      if (!nextItem) {
+        showToast('Antrian Kosong', 'Tidak ada antrian berstatus menunggu untuk dipanggil.');
+        return;
+      }
+
+      // If an existing queue was calling, mark it completed
+      queues.forEach(q => {
+        if (q.status === 'calling') q.status = 'completed';
+      });
+
+      nextItem.status = 'calling';
+      nextItem.destination = selectedTable;
+      nextItem.calledAt = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+      saveQueues(queues);
+      renderAll();
+      showToast('Memanggil Antrian', `Memanggil ${nextItem.id} (${nextItem.name}) ke ${selectedTable}`);
+      speakAnnouncement(nextItem.id, nextItem.name, selectedTable);
+    }
+
+    function repeatCurrentCall() {
+      const queues = loadQueues();
+      const callingItem = queues.find(q => q.status === 'calling');
+      if (!callingItem) {
+        showToast('Info', 'Belum ada antrian yang sedang dalam status dipanggil.');
+        return;
+      }
+      showToast('Panggilan Diulang', `Memanggil ulang nomor ${callingItem.id}`);
+      speakAnnouncement(callingItem.id, callingItem.name, callingItem.destination || 'Meja Dipersiapkan');
+    }
+
+    function callSpecificTicket(ticketId) {
+      const queues = loadQueues();
+      const selectedTable = document.getElementById('tableAssignment').value;
+      const target = queues.find(q => q.id === ticketId);
+      if (!target) return;
+
+      // Complete previously calling queue
+      queues.forEach(q => {
+        if (q.status === 'calling' && q.id !== ticketId) q.status = 'completed';
+      });
+
+      target.status = 'calling';
+      target.destination = selectedTable;
+      target.calledAt = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+      saveQueues(queues);
+      renderAll();
+      showToast('Panggilan Khusus', `Memanggil nomor ${target.id} ke ${selectedTable}`);
+      speakAnnouncement(target.id, target.name, selectedTable);
+    }
+
+    function markCurrentCompleted() {
+      const queues = loadQueues();
+      const callingItem = queues.find(q => q.status === 'calling');
+      if (!callingItem) {
+        showToast('Info', 'Tidak ada antrian yang sedang aktif dipanggil.');
+        return;
+      }
+      callingItem.status = 'completed';
+      saveQueues(queues);
+      renderAll();
+      showToast('Sukses', `Antrian ${callingItem.id} berhasil ditandai selesai.`);
+    }
+
+    function setQueueStatus(ticketId, newStatus) {
+      const queues = loadQueues();
+      const target = queues.find(q => q.id === ticketId);
+      if (!target) return;
+
+      target.status = newStatus;
+      saveQueues(queues);
+      renderAll();
+      showToast('Status Diperbarui', `Antrian ${ticketId} kini berstatus: ${newStatus}`);
+    }
+
+    function resetDayDataPrompt() {
+      // Replaces confirm with in-UI gentle reset handler
+      const freshQueues = [
+        {
+          id: 'A-01',
+          name: 'Tamu Pertama',
+          pax: 2,
+          area: 'Indoor AC',
+          notes: '',
+          time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+          status: 'waiting',
+          destination: '',
+          calledAt: ''
+        }
+      ];
+      saveQueues(freshQueues);
+      renderAll();
+      showToast('Reset Berhasil', 'Data antrian hari ini telah di-reset ke nomor A-01.');
+    }
+
+    /* =========================================================================
+       7. KIOSK & TICKET ISSUANCE
+       ========================================================================= */
+    function selectPax(count) {
+      document.getElementById('custPax').value = count;
+      document.querySelectorAll('.pax-btn').forEach(btn => {
+        btn.className = 'pax-btn py-2.5 rounded-xl border border-coffee-200 text-sm font-bold text-coffee-800 hover:border-terracotta transition bg-crema';
+      });
+      event.target.className = 'pax-btn py-2.5 rounded-xl border border-terracotta bg-terracotta text-white text-sm font-bold transition shadow-sm';
+    }
+
+    function handleTakeTicket(event) {
+      event.preventDefault();
+      const nameInput = document.getElementById('custName');
+      const pax = parseInt(document.getElementById('custPax').value, 10) || 2;
+      const area = document.querySelector('input[name="areaOption"]:checked').value;
+      const notes = document.getElementById('custNotes').value.trim();
+
+      const name = nameInput.value.trim() || 'Tamu Resto';
+      const queues = loadQueues();
+
+      // Compute sequential ticket ID
+      let prefix = 'A';
+      if (area === 'Outdoor') prefix = 'B';
+      if (area === 'VIP Lounge') prefix = 'V';
+      if (area === 'Takeaway') prefix = 'T';
+
+      const nextNum = queues.length + 1;
+      const formattedNum = `${prefix}-${String(nextNum).padStart(2, '0')}`;
+      const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+      const newTicket = {
+        id: formattedNum,
+        name: name,
+        pax: pax,
+        area: area,
+        notes: notes,
+        time: nowTime,
+        status: 'waiting',
+        destination: '',
+        calledAt: ''
+      };
+
+      queues.push(newTicket);
+      saveQueues(queues);
+
+      // Update Receipt Preview in UI
+      const waitingAhead = queues.filter(q => q.status === 'waiting' && q.id !== formattedNum).length;
+      document.getElementById('ticketPreviewNum').textContent = formattedNum;
+      document.getElementById('ticketPreviewName').textContent = name;
+      document.getElementById('ticketPreviewArea').textContent = `Area: ${area} (${pax} Pax)`;
+      document.getElementById('ticketPreviewTime').textContent = `${nowTime} WIB`;
+      document.getElementById('ticketPreviewAhead').textContent = `${waitingAhead} rombongan`;
+      document.getElementById('ticketPreviewWait').textContent = `~${Math.max(5, waitingAhead * 5)} Menit`;
+
+      // Reset form fields
+      nameInput.value = '';
+      document.getElementById('custNotes').value = '';
+
+      renderAll();
+      showToast('Tiket Diterbitkan!', `Nomor Anda adalah ${formattedNum}. Silakan simpan struk Anda.`);
+      playDingDongChime();
+    }
+
+    /* =========================================================================
+       8. UTILITY: TOAST NOTIFICATION & CLOCK
+       ========================================================================= */
+    let toastTimeout = null;
+    function showToast(title, message, icon = '🔔') {
+      const toast = document.getElementById('toastMessage');
+      document.getElementById('toastTitle').textContent = title;
+      document.getElementById('toastBody').textContent = message;
+      document.getElementById('toastIcon').textContent = icon;
+
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 4000);
+    }
+
+    function initClock() {
+      const clockEl = document.getElementById('clockDisplay');
+      const dateEl = document.getElementById('dateDisplay');
+      
+      function update() {
+        const now = new Date();
+        if (clockEl) {
+          clockEl.textContent = now.toLocaleTimeString('id-ID', { hour12: false }) + ' WIB';
+        }
+        if (dateEl) {
+          const options = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+          dateEl.textContent = now.toLocaleDateString('id-ID', options);
+        }
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    // Keyboard Shortcuts for Staff (e.g. Space or 'N' for next)
+    window.addEventListener('keydown', (e) => {
+      // Don't trigger if typing in an input
+      if (['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key === 'n' || e.key === 'N') {
+        callNextQueue();
+      } else if (e.key === 'r' || e.key === 'R') {
+        repeatCurrentCall();
+      }
+    });
+
+    // Initialize application on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      initClock();
+      renderAll();
+      // Pre-populate ticket preview with first queued item
+      const queues = loadQueues();
+      if (queues.length > 0) {
+        const item = queues[0];
+        document.getElementById('ticketPreviewNum').textContent = item.id;
+        document.getElementById('ticketPreviewName').textContent = item.name;
+        document.getElementById('ticketPreviewArea').textContent = `Area: ${item.area} (${item.pax} Pax)`;
+        document.getElementById('ticketPreviewTime').textContent = `${item.time} WIB`;
+      }
+    });
+  </script>
+</body>
+</html>
